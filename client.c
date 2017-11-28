@@ -9,27 +9,25 @@ int main(){
 	struct sockaddr_in server;
 	char message[3000];
 	
-	//create socket
 	sock=socket(AF_INET,SOCK_STREAM,0);
 	if(sock==-1){
-	   printf("could not create socket");
+	   printf("Could not create socket");
 	}
-	puts("socket created");
-	//socket specification
+	puts("Socket created");
+
 	server.sin_addr.s_addr=inet_addr("127.0.0.1");
 	server.sin_family=AF_INET;
 	server.sin_port=htons(1000);
 
-	//connect to server
 	if(connect(sock,(struct sockaddr *)&server,sizeof(server))<0){
-		perror("fail to connect to loadbalancer");
+		perror("Fail to connect to loadbalancer");
 		return 1;
 	}
 
-	printf("enter your message");
+	printf("Enter your message");
 	scanf("%s",message);
 	if(send(sock,message,strlen(message),0)<0){
-	puts("fail to send");
+	puts("Fail to send");
 	return 1;
 	}
 	close(sock);
