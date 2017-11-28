@@ -5,84 +5,79 @@
 #include <unistd.h>
 
 int main(){
-	int socket_desc,client_sock,c,read_size,serversocket1,serversocket2;
-	struct sockaddr_in loadbalancer,client,server1,server2;
+	int socket_desc,client_sock,c,read_size,ssocket1,ssocket2;
+	struct sockaddr_in loadbalancer,client,s1,s2;
 	char client_message[3000];
 
-	//create socket
 	socket_desc=socket(AF_INET,SOCK_STREAM,0);
+	
 	if(socket_desc==-1){
-		printf("cant create socket");
+	printf("Cant create socket");
 	}
 	puts("loadbalancer socket created");
 	
-	//prepare the sockaddr_in structure
+
 	loadbalancer.sin_family=AF_INET;
 	loadbalancer.sin_addr.s_addr=INADDR_ANY;
 	loadbalancer.sin_port=htons(1000);
-	
-	//bind
+
 	if(bind(socket_desc,(struct sockaddr *)&loadbalancer,sizeof(loadbalancer))<0){
-	perror("fail to bind the socket to server");
+	perror("Fail to bind the socket to server");
 	return 1;
 	}
 	
-	puts("bind done");
+	puts("Bind done");
 
-	//listen to the client
 	listen(socket_desc,3);
 
-	//wait for incoming connection
-	puts("waiting for incoming connection");
+	puts("Waiting for incoming connection");
 	c=sizeof(struct sockaddr_in);
 
-	//accept connection from incoming client
+
 	client_sock=accept(socket_desc,(struct sockaddr *)&client,(socklen_t *)&c);
 	if(client_sock<0){
-	perror("accept failed");
+	perror("Accept failed");
 	return 1;
 	}
-	puts("connection accepted");
+	puts("Connection accepted");
 
 	read_size=recv(client_sock,client_message,3000,0);
 	
-	if(strcmp(client_message,"girl")==0){
+	if(strcmp(client_message,"server 1")==0){
+	serversocket1=socket(AF_INET,SOCK_STREAM,0);
+	s1.sin_family=AF_INET;
+	s1.sin_addr.s_addr=inet_addr("192.168.32.128");
+	s1.sin_port=htons(3000);
+	if(connect(ssocket1,(struct sockaddr *)&s1,sizeof(s1))<0){
+	perror("fail to connect to loadbalancer");
+	return 1;
+	}
 
-		//create socket for server1
-		serversocket1=socket(AF_INET,SOCK_STREAM,0);
-		server1.sin_family=AF_INET;
-		server1.sin_addr.s_addr=inet_addr("127.0.0.1");
-		server1.sin_port=htons(3000);
-		if(connect(serversocket1,(struct sockaddr *)&server1,sizeof(server1))<0){
-		perror("fail to connect to loadbalancer");
-		return 1;
-		}
-
-		if(send(serversocket1,client_message,strlen(client_message),0)<0){
-		puts("fail to send");
-		return 1;
-		}
-	close(serversocket1);
-	}else if(strcmp(client_message,"boy")==0){
-
-		//create socket for server2
-		serversocket2=socket(AF_INET,SOCK_STREAM,0);
-		server2.sin_family=AF_INET;
-		server2.sin_addr.s_addr=inet_addr("127.0.0.1");
-		server2.sin_port=htons(4000);
-		if(connect(serversocket2,(struct sockaddr *)&server2,sizeof(server2))<0){
-		perror("fail to connect to loadbalancer");
-		return 1;
-		}
-
-		if(send(serversocket2,client_message,strlen(client_message),0)<0){
-		puts("fail to send");
-		return 1;
-		}
-		close(serversocket2);	
-	}else{
-	printf("error!!! the message did not redirected to any server");	
+	if(send(ssocket1,client_message,strlen(client_message),0)<0){
+	puts("Fail to send");
+	return 1;
+	}	
+	close(ssocket1);
 	}
 	
+	else if(strcmp(client_message,"server 2")==0){
+	serversocket2=socket(AF_INET,SOCK_STREAM,0);
+	s2.sin_family=AF_INET;
+	s2.sin_addr.s_addr=inet_addr("192.168.32.129");
+	s2.sin_port=htons(4000);
+	if(connect(ssocket2,(struct sockaddr *)&s2,sizeof(s2))<0){
+	perror("Fail to connect to loadbalancer");
+	return 1;
+	}
+		
+	if(send(ssocket2,client_message,strlen(client_message),0)<0){
+	puts("Fail to send");
+	return 1;
+	}
+	close(ssocket2);	
+	}
 	
+	else{
+	printf("ERROR!!! the message did not redirected to any server");	
+	}	
 }
